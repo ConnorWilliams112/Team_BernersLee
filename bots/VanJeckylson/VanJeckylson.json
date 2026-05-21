@@ -1,0 +1,8 @@
+{
+  "name": "VanJeckylson",
+  "version": "1.0",
+  "authors": ["Michael Schnabel", "Partner Name"],
+  "description": "One sentence about your strategy.",
+  "platform": "JVM",
+  "programmingLang": "Java 21"
+}
