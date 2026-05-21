@@ -2,14 +2,13 @@
   "name": "BudBot",
   "version": "1.0",
   "authors": [
-    "Mathew Nelson",
-    "Flemming N. Larsen"
+    "Michael Schnabel",
+    "Connor Williams"
   ],
-  "description": "A sample bot that is probably the first bot you will learn about.",
+  "description": "A fast, lethal bot named after the legendary B U D Z I T O W S K I.",
   "homepage": "",
   "countryCodes": [
-    "us",
-    "dk"
+    "us"
   ],
   "platform": "JVM",
   "programmingLang": "Java 25"
