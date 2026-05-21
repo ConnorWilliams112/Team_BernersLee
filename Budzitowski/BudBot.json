@@ -1,5 +1,5 @@
 {
-  "name": "My First Bot",
+  "name": "BudBot",
   "version": "1.0",
   "authors": [
     "Mathew Nelson",
@@ -12,5 +12,5 @@
     "dk"
   ],
   "platform": "JVM",
-  "programmingLang": "Java 11"
+  "programmingLang": "Java 25"
 }
