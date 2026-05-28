@@ -1,5 +1,6 @@
 import dev.robocode.tankroyale.botapi.*;
 import dev.robocode.tankroyale.botapi.events.*;
+import robocode.util.Utils;
 
 // ------------------------------------------------------------------
 // BudBot
@@ -42,9 +43,13 @@ public class BudBot extends Bot {
     @Override
     public void run() {
         // Repeat while the bot is running
+        setAdjustGunForRobotTurn(true);
+        setAdjustRadarForGunTurn(true);
+        setTurnRadarRight(Double.POSITIVE_INFINITY);
+
         while (isRunning()) {
-            //TO DO: Implement movement and scanning loops here
-            if (getEnemyCount() > 1) {
+            scan();
+            if (getEnemyCount() > 2) {
                 // Implement melee tactics
                 meleeTactics();
             } else {
@@ -57,17 +62,12 @@ public class BudBot extends Bot {
     //--------------------METHODS--------------------------------------//
     //-----------------------------------------------------------------//
     public void meleeTactics() {
-        // TO DO: Implement melee tactics here
-        enemies = getEnemyCount();
-
-        while enemies > 1 {
-            //TO DO: Implement movement and scanning loops here
-            
-        }
+        // TO DO: Implement melee tactics here -> Avoid damage, survive, opportunistic firing
+        
     }
 
     public void oneVsOneTactics() {
-        // TO DO: Implement 1v1 tactics here
+        // TO DO: Implement 1v1 tactics here -> Maximize damage
 
     }
 
@@ -77,8 +77,8 @@ public class BudBot extends Bot {
 
     // Other bot IDed
     @Override
-    public void onScannedBot(ScannedBotEvent e) {
-        fire(1);
+    public void onScannedRobot(ScannedRobotEvent e) {
+        setTurnRadarRight(2.0 * Utils.normalRelativeAngleDegrees(getHeading() + e.getBearing() - getRadarHeading()));
     }
 
     // We were hit by a bullet -> turn perpendicular to the bullet
