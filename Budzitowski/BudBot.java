@@ -4,29 +4,22 @@ import dev.robocode.tankroyale.botapi.events.*;
 // ------------------------------------------------------------------
 // BudBot
 // ------------------------------------------------------------------
-// A sample bot originally made for Robocode by Mathew Nelson.
-//
-// Probably the first bot you will learn about.
-// Moves in a seesaw motion and spins the gun around at each end.
-// ------------------------------------------------------------------
 public class BudBot extends Bot {
 
-    // The main method starts our bot
     public static void main(String[] args) {
         new BudBot().start();
     }
 
     //To implement:
-        //Melee vs Single checker -> Scan, add ID to table
-            //If > 1, melee tactics
-            //If 1, 1v1 tactics
         // Power level selection tree -> Aggregate score with weights
         // Targeting/accuracy logic
         // Movement logic -> Random walk, wall avoidance, etc.
         // Enemy tracking -> Keep track of scanned bots and their positions
         // Event handling -> React to being hit, hitting others
         
-    // Pre-compute common angles
+    //-----------------------------------------------------------------//
+    //--------------------PRECOMPUTE/STATIC STUFF----------------------//
+    //-----------------------------------------------------------------//
     private static final double[] SIN_TABLE = new double[360];
     private static final double[] COS_TABLE = new double[360];
 
@@ -37,23 +30,50 @@ public class BudBot extends Bot {
             COS_TABLE[i] = Math.cos(radians);
         }
     }
-
-    // Fast lookups
     public double fastSin(double degrees) {
         return SIN_TABLE[(int) degrees % 360];
     }
     public double fastCos(double degrees) {
         return COS_TABLE[(int) degrees % 360];
     }
-
-    
+    //-----------------------------------------------------------------//
+    //--------------------BOT MAIN LOOP--------------------------------//
+    //-----------------------------------------------------------------//
     @Override
     public void run() {
         // Repeat while the bot is running
         while (isRunning()) {
             //TO DO: Implement movement and scanning loops here
+            if (getEnemyCount() > 1) {
+                // Implement melee tactics
+                meleeTactics();
+            } else {
+                // Implement 1v1 tactics
+                oneVsOneTactics();
+            }
         }
     }
+    //-----------------------------------------------------------------//
+    //--------------------METHODS--------------------------------------//
+    //-----------------------------------------------------------------//
+    public void meleeTactics() {
+        // TO DO: Implement melee tactics here
+        enemies = getEnemyCount();
+
+        while enemies > 1 {
+            //TO DO: Implement movement and scanning loops here
+            
+        }
+    }
+
+    public void oneVsOneTactics() {
+        // TO DO: Implement 1v1 tactics here
+
+    }
+
+    //-----------------------------------------------------------------//
+    //--------------------INTERRUPT HANDLERS---------------------------//
+    //-----------------------------------------------------------------//
 
     // Other bot IDed
     @Override
