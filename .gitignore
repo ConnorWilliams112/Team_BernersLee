@@ -1,0 +1,16 @@
+# Ignore everything
+*
+
+# Keep ignore rules visible
+!.gitignore
+
+# Except your bot source and metadata
+!bots/
+!bots/VanJeckylson/
+!bots/VanJeckylson/VanJeckylson.java
+!bots/VanJeckylson/VanJeckylson.json
+
+# Never upload local build/runtime files
+*.class
+*.jar
+_lab08_bots_extract/
