@@ -28,9 +28,29 @@ public class VanJeckylson extends Bot {
 
     @Override
     public void onScannedBot(ScannedBotEvent e) {
-        // use stronger bullets when closer
-        if (distanceTo(e.getX(), e.getY()) < 150) {
+        double distance = distanceTo(e.getX(), e.getY());
+
+        // Turn gun toward the enemy
+        double gunBearing = gunBearingTo(e.getX(), e.getY());
+        turnGunRight(gunBearing);
+
+        // Move closer if far away
+        if (distance > 250) {
+            double bearing = calcBearing(directionTo(e.getX(), e.getY()));
+            turnRight(bearing);
+            forward(100);
+        } else {
+            // move offline if close to enemy
+            double bearing = calcBearing(directionTo(e.getX(), e.getY()));
+            turnRight(bearing + 90);
+            forward(75);
+        }
+
+        // Fire harder when closer
+        if (distance < 150) {
             fire(3);
+        } else if (distance < 350) {
+            fire(2);
         } else {
             fire(1);
         }
