@@ -30,8 +30,29 @@ public class VanJeckylson extends Bot {
     public void onScannedBot(ScannedBotEvent e) {
         double distance = distanceTo(e.getX(), e.getY());
 
-        // Turn gun toward the enemy
-        double gunBearing = gunBearingTo(e.getX(), e.getY());
+        // Fire harder when closer
+        double firePower;
+        if (distance < 150) {
+            firePower = 3;
+        } else if (distance < 350) {
+            firePower = 2;
+        } else {
+            firePower = 1;
+        }
+
+        // Save energy if low
+        if (getEnergy() < 10) {
+            firePower = 0.5;
+        }
+
+        // Predict where the enemy will be
+        double bulletSpeed = 20 - 3 * firePower;
+        double time = distance / bulletSpeed;
+        double futureX = e.getX() + Math.sin(Math.toRadians(e.getDirection())) * e.getSpeed() * time;
+        double futureY = e.getY() + Math.cos(Math.toRadians(e.getDirection())) * e.getSpeed() * time;
+
+        // Turn gun toward predicted position
+        double gunBearing = gunBearingTo(futureX, futureY);
         turnGunRight(gunBearing);
 
         // Move closer if far away
@@ -46,13 +67,9 @@ public class VanJeckylson extends Bot {
             forward(75);
         }
 
-        // Fire harder when closer
-        if (distance < 150) {
-            fire(3);
-        } else if (distance < 350) {
-            fire(2);
-        } else {
-            fire(1);
+        // Fire when the gun is ready and lined up
+        if (getGunHeat() == 0 && Math.abs(gunBearing) <= 5 && getEnergy() > 1) {
+            fire(firePower);
         }
     }
 
