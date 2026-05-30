@@ -8,8 +8,14 @@ public class VanJeckylson extends Bot {
     int moveDirection = 1;
     int scansSinceDirectionChange = 0;
     int scansBeforeDirectionChange = 4;
+    int scansSinceHitDecay = 0;
+    int scansSinceLastSeen = 0;
     int hitCount = 0;
+    int wallHitCount = 0;
     boolean defensiveMode = false;
+    double lastEnemyX = 0;
+    double lastEnemyY = 0;
+    boolean lastEnemySeen = false;
     Random random = new Random();
 
     public static void main(String[] args) {
@@ -26,7 +32,23 @@ public class VanJeckylson extends Bot {
 
         // scan loop
         while (isRunning()) {
-            turnGunLeft(45);
+            // Forget old target info if scans go cold
+            scansSinceLastSeen++;
+            if (scansSinceLastSeen > 12) {
+                lastEnemySeen = false;
+            }
+
+            if (lastEnemySeen) {
+                // Sweep near the last enemy before searching again
+                double gunBearing = gunBearingTo(lastEnemyX, lastEnemyY);
+                if (Math.abs(gunBearing) > 20) {
+                    turnGunLeft(Math.copySign(20, gunBearing));
+                } else {
+                    turnGunLeft(20 * moveDirection);
+                }
+            } else {
+                turnGunLeft(20);
+            }
         }
     }
 
@@ -35,15 +57,68 @@ public class VanJeckylson extends Bot {
         double distance = distanceTo(e.getX(), e.getY());
         double speed = Math.abs(e.getSpeed());
 
-        // Change directions sometimes
+        // Remember last scanned enemy
+        lastEnemyX = e.getX();
+        lastEnemyY = e.getY();
+        lastEnemySeen = true;
+        scansSinceLastSeen = 0;
+
+        // Slowly leave defensive mode if hits stop coming
+        scansSinceHitDecay++;
+        if (scansSinceHitDecay >= 6 && hitCount > 0) {
+            hitCount--;
+            scansSinceHitDecay = 0;
+            defensiveMode = hitCount >= 3;
+        }
+
+        // Pick fire power
+        double firePower = pickFirePower(distance, speed);
+
+        // Predict where the enemy will be
+        double bulletSpeed = 20 - 3 * firePower;
+        double time = getPredictionTime(distance, bulletSpeed, speed);
+        double futureX = e.getX();
+        double futureY = e.getY();
+
+        // Use less lead against fast close enemies
+        if (speed >= 1 && !(speed > 4 && distance < 300)) {
+            futureX += Math.sin(Math.toRadians(e.getDirection())) * e.getSpeed() * time;
+            futureY += Math.cos(Math.toRadians(e.getDirection())) * e.getSpeed() * time;
+        }
+
+        // Turn gun toward predicted position
+        double gunBearing = gunBearingTo(futureX, futureY);
+        turnGunLeft(gunBearing);
+
+        // Fire when the gun is ready and lined up
+        double aimLimit;
+        if (getEnemyCount() > 2) {
+            aimLimit = 5;
+        } else {
+            aimLimit = 3;
+        }
+
+        if (getGunHeat() == 0 && Math.abs(gunBearing) <= aimLimit && getEnergy() > 1) {
+            fire(firePower);
+        }
+
+        // Only move every few scans so movement commands actually complete
         scansSinceDirectionChange++;
         if (scansSinceDirectionChange >= scansBeforeDirectionChange) {
             moveDirection *= -1;
             scansSinceDirectionChange = 0;
             scansBeforeDirectionChange = 3 + random.nextInt(4);
+            double bearing = calcBearing(directionTo(e.getX(), e.getY()));
+            handleMovement(bearing, distance, speed);
         }
 
-        // Pick fire power
+        // Rescan more often when enemies are close or lined up
+        if (distance < 400 || Math.abs(gunBearing) <= 10) {
+            rescan();
+        }
+    }
+
+    private double pickFirePower(double distance, double speed) {
         double firePower;
         if (speed > 4 && distance < 250) {
             firePower = 3;
@@ -64,39 +139,30 @@ public class VanJeckylson extends Bot {
             firePower = 0.5;
         }
 
-        // Predict where the enemy will be
-        double bulletSpeed = 20 - 3 * firePower;
-        double time;
+        return firePower;
+    }
+
+    private double getPredictionTime(double distance, double bulletSpeed, double speed) {
         if (speed > 4) {
-            time = Math.min(distance / bulletSpeed, 5);
-        } else {
-            time = Math.min(distance / bulletSpeed, 12);
-        }
-        double futureX = e.getX();
-        double futureY = e.getY();
-
-        // Lead moving enemies, but aim straight at slow enemies
-        if (speed >= 1) {
-            futureX += Math.sin(Math.toRadians(e.getDirection())) * e.getSpeed() * time;
-            futureY += Math.cos(Math.toRadians(e.getDirection())) * e.getSpeed() * time;
+            return Math.min(distance / bulletSpeed, 5);
         }
 
-        // Turn gun toward predicted position
-        double gunBearing = gunBearingTo(futureX, futureY);
-        turnGunLeft(gunBearing);
+        return Math.min(distance / bulletSpeed, 12);
+    }
 
-        // Fire when the gun is ready and lined up
-        double aimError = gunBearingTo(futureX, futureY);
-        if (getGunHeat() == 0 && Math.abs(aimError) <= 5 && getEnergy() > 1) {
-            fire(firePower);
-        }
-
-        // Circle around the enemy
-        double bearing = calcBearing(directionTo(e.getX(), e.getY()));
-        if (defensiveMode && speed > 4 && distance < 400) {
+    private void handleMovement(double bearing, double distance, double speed) {
+        // called by onScannedBot() to determine movement branching
+        if (isNearWall()) {
+            // Turn toward the center before hitting a wall
+            avoidWall();
+        } else if (distance < 160) {
+            // Turn away if an enemy gets too close
+            turnRight(bearing + 180);
+            forward(130);
+        } else if (defensiveMode && speed > 4 && distance < 400) {
             // Keep distance if fast enemies keep hitting us
             turnRight(bearing + 170);
-            forward(180 * moveDirection);
+            forward(180);
         } else if (defensiveMode && speed > 4) {
             // Strafe fast enemies once we have space
             turnRight(bearing + 100);
@@ -104,7 +170,7 @@ public class VanJeckylson extends Bot {
         } else if (speed > 4 && distance < 250) {
             // Back away from fast enemies that get too close
             turnRight(bearing + 160);
-            forward(160 * moveDirection);
+            forward(160);
         } else if (distance > 500) {
             turnRight(bearing + 45);
             forward(90 * moveDirection);
@@ -115,8 +181,19 @@ public class VanJeckylson extends Bot {
             turnRight(bearing + 110);
             forward(60 * moveDirection);
         }
+    }
 
-        rescan();
+    private boolean isNearWall() {
+        return getX() < 80 || getY() < 80 || getX() > getArenaWidth() - 80 || getY() > getArenaHeight() - 80;
+    }
+
+    private void avoidWall() {
+        double centerX = getArenaWidth() / 2.0;
+        double centerY = getArenaHeight() / 2.0;
+        double bearingToCenter = calcBearing(directionTo(centerX, centerY));
+
+        turnRight(bearingToCenter);
+        forward(120);
     }
 
     @Override
@@ -131,13 +208,14 @@ public class VanJeckylson extends Bot {
 
         // back up and switch direction
         moveDirection *= -1;
-        back(50);
+        back(120);
     }
 
     @Override
     public void onHitByBullet(HitByBulletEvent e) {
         // Count hits so we can adapt our movement
         hitCount++;
+        scansSinceHitDecay = 0;
         if (hitCount >= 3) {
             defensiveMode = true;
         }
@@ -151,24 +229,39 @@ public class VanJeckylson extends Bot {
 
     @Override
     public void onHitWall(HitWallEvent e) {
-        // back up and turn away
+        // Use our heading to turn away from the wall
+        wallHitCount++;
         moveDirection *= -1;
-        back(100);
-        turnRight(90);
+
+        back(120);
+        turnRight(100 * moveDirection);
+
+        // Add a bigger turn if we are stuck near a wall
+        if (wallHitCount >= 2) {
+            turnRight(60 + random.nextInt(60));
+            wallHitCount = 0;
+        }
     }
 
     @Override
     public void onDeath(DeathEvent e) {
         // reset adaptive movement for next round
-        hitCount = 0;
-        defensiveMode = false;
+        resetRoundState();
     }
 
     @Override
     public void onWonRound(WonRoundEvent e) {
         // reset adaptive movement for next round
+        resetRoundState();
+    }
+
+    private void resetRoundState() {
         hitCount = 0;
+        wallHitCount = 0;
+        scansSinceHitDecay = 0;
+        scansSinceLastSeen = 0;
         defensiveMode = false;
+        lastEnemySeen = false;
     }
 
 }
