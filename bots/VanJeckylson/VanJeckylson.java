@@ -5,18 +5,33 @@ import java.util.Random;
 
 public class VanJeckylson extends Bot {
 
-    int moveDirection = 1;
-    int scansSinceDirectionChange = 0;
-    int scansBeforeDirectionChange = 4;
-    int scansSinceHitDecay = 0;
-    int scansSinceLastSeen = 0;
-    int hitCount = 0;
-    int wallHitCount = 0;
-    boolean defensiveMode = false;
-    double lastEnemyX = 0;
-    double lastEnemyY = 0;
-    boolean lastEnemySeen = false;
-    Random random = new Random();
+    private static final double WALL_MARGIN = 80;
+    private static final int STALE_TARGET_TURNS = 12;
+    private static final double SCAN_STEP = 20;
+    private static final double ONE_ON_ONE_LOCAL_SWEEP = 5;
+    private static final double CLOSE_DISTANCE = 160;
+    private static final double FAST_SPEED = 4;
+    private static final double MELEE_AIM_LIMIT = 5;
+    private static final double ONE_V_ONE_AIM_LIMIT = 3;
+
+    // Strategy:
+    // - aim directly at slow enemies
+    // - lead moving enemies with capped prediction
+    // - oscillate movement with some randomness
+    // - dodge harder after repeated bullet hits
+    // - turn toward center before hitting walls
+    private int moveDirection = 1;
+    private int scansSinceDirectionChange = 0;
+    private int scansBeforeDirectionChange = 4;
+    private int scansSinceHitDecay = 0;
+    private int turnsSinceLastSeen = 0;
+    private int hitCount = 0;
+    private int wallHitCount = 0;
+    private boolean defensiveMode = false;
+    private double lastEnemyX = 0;
+    private double lastEnemyY = 0;
+    private boolean lastEnemySeen = false;
+    private final Random random = new Random();
 
     public static void main(String[] args) {
         new VanJeckylson().start();
@@ -30,24 +45,35 @@ public class VanJeckylson extends Bot {
         setBulletColor(Color.BLACK);
         setScanColor(Color.BLACK);
 
+        // Keep gun steady while body turns
+        setAdjustGunForBodyTurn(true);
+
         // scan loop
         while (isRunning()) {
             // Forget old target info if scans go cold
-            scansSinceLastSeen++;
-            if (scansSinceLastSeen > 12) {
+            turnsSinceLastSeen++;
+            if (turnsSinceLastSeen > STALE_TARGET_TURNS) {
                 lastEnemySeen = false;
             }
 
-            if (lastEnemySeen) {
+            if (getEnemyCount() == 1 && lastEnemySeen) {
+                // Lock radar near target in one-on-one
+                double gunBearing = gunBearingTo(lastEnemyX, lastEnemyY);
+                if (Math.abs(gunBearing) > SCAN_STEP) {
+                    turnGunLeft(Math.copySign(SCAN_STEP, gunBearing));
+                } else {
+                    turnGunLeft(ONE_ON_ONE_LOCAL_SWEEP * moveDirection);
+                }
+            } else if (lastEnemySeen) {
                 // Sweep near the last enemy before searching again
                 double gunBearing = gunBearingTo(lastEnemyX, lastEnemyY);
-                if (Math.abs(gunBearing) > 20) {
-                    turnGunLeft(Math.copySign(20, gunBearing));
+                if (Math.abs(gunBearing) > SCAN_STEP) {
+                    turnGunLeft(Math.copySign(SCAN_STEP, gunBearing));
                 } else {
-                    turnGunLeft(20 * moveDirection);
+                    turnGunLeft(SCAN_STEP * moveDirection);
                 }
             } else {
-                turnGunLeft(20);
+                turnGunLeft(SCAN_STEP);
             }
         }
     }
@@ -61,7 +87,7 @@ public class VanJeckylson extends Bot {
         lastEnemyX = e.getX();
         lastEnemyY = e.getY();
         lastEnemySeen = true;
-        scansSinceLastSeen = 0;
+        turnsSinceLastSeen = 0;
 
         // Slowly leave defensive mode if hits stop coming
         scansSinceHitDecay++;
@@ -81,7 +107,7 @@ public class VanJeckylson extends Bot {
         double futureY = e.getY();
 
         // Use less lead against fast close enemies
-        if (speed >= 1 && !(speed > 4 && distance < 300)) {
+        if (speed >= 1 && !(speed > FAST_SPEED && distance < 300)) {
             futureX += Math.sin(Math.toRadians(e.getDirection())) * e.getSpeed() * time;
             futureY += Math.cos(Math.toRadians(e.getDirection())) * e.getSpeed() * time;
         }
@@ -90,15 +116,18 @@ public class VanJeckylson extends Bot {
         double gunBearing = gunBearingTo(futureX, futureY);
         turnGunLeft(gunBearing);
 
+        // Refresh aim after gun movement
+        double aimError = gunBearingTo(futureX, futureY);
+
         // Fire when the gun is ready and lined up
         double aimLimit;
         if (getEnemyCount() > 2) {
-            aimLimit = 5;
+            aimLimit = MELEE_AIM_LIMIT;
         } else {
-            aimLimit = 3;
+            aimLimit = ONE_V_ONE_AIM_LIMIT;
         }
 
-        if (getGunHeat() == 0 && Math.abs(gunBearing) <= aimLimit && getEnergy() > 1) {
+        if (getGunHeat() == 0 && Math.abs(aimError) <= aimLimit && getEnergy() > 1) {
             fire(firePower);
         }
 
@@ -113,16 +142,16 @@ public class VanJeckylson extends Bot {
         }
 
         // Rescan more often when enemies are close or lined up
-        if (distance < 400 || Math.abs(gunBearing) <= 10) {
+        if (distance < 400 || Math.abs(aimError) <= 10) {
             rescan();
         }
     }
 
     private double pickFirePower(double distance, double speed) {
         double firePower;
-        if (speed > 4 && distance < 250) {
+        if (speed > FAST_SPEED && distance < 250) {
             firePower = 3;
-        } else if (speed > 4) {
+        } else if (speed > FAST_SPEED) {
             firePower = 1.5;
         } else if (speed < 1 && distance < 300) {
             firePower = 3;
@@ -143,7 +172,7 @@ public class VanJeckylson extends Bot {
     }
 
     private double getPredictionTime(double distance, double bulletSpeed, double speed) {
-        if (speed > 4) {
+        if (speed > FAST_SPEED) {
             return Math.min(distance / bulletSpeed, 5);
         }
 
@@ -151,27 +180,58 @@ public class VanJeckylson extends Bot {
     }
 
     private void handleMovement(double bearing, double distance, double speed) {
-        // called by onScannedBot() to determine movement branching
         if (isNearWall()) {
             // Turn toward the center before hitting a wall
             avoidWall();
-        } else if (distance < 160) {
+        } else if (distance < CLOSE_DISTANCE) {
             // Turn away if an enemy gets too close
             turnRight(bearing + 180);
             forward(130);
-        } else if (defensiveMode && speed > 4 && distance < 400) {
+        } else if (getEnemyCount() > 2) {
+            // Use melee movement when multiple enemies are alive
+            handleMeleeMovement(bearing, distance, speed);
+        } else {
+            // Use one-on-one movement for duels
+            handleOneVsOneMovement(bearing, distance, speed);
+        }
+    }
+
+    private void handleMeleeMovement(double bearing, double distance, double speed) {
+        // Move differently in melee
+        if (defensiveMode && speed > FAST_SPEED && distance < 400) {
             // Keep distance if fast enemies keep hitting us
             turnRight(bearing + 170);
             forward(180);
-        } else if (defensiveMode && speed > 4) {
-            // Strafe fast enemies once we have space
-            turnRight(bearing + 100);
-            forward(140 * moveDirection);
-        } else if (speed > 4 && distance < 250) {
+        } else if (speed > FAST_SPEED && distance < 250) {
             // Back away from fast enemies that get too close
             turnRight(bearing + 160);
             forward(160);
-        } else if (distance > 500) {
+        } else {
+            handleDefaultMovement(bearing, distance);
+        }
+    }
+
+    private void handleOneVsOneMovement(double bearing, double distance, double speed) {
+        // Move differently in one-on-one
+        if (defensiveMode && speed > FAST_SPEED && distance < 400) {
+            // Keep distance if fast enemies keep hitting us
+            turnRight(bearing + 170);
+            forward(180);
+        } else if (defensiveMode && speed > FAST_SPEED) {
+            // Strafe fast enemies once we have space
+            turnRight(bearing + 100);
+            forward(140 * moveDirection);
+        } else if (speed > FAST_SPEED && distance < 250) {
+            // Back away from fast enemies that get too close
+            turnRight(bearing + 160);
+            forward(160);
+        } else {
+            handleDefaultMovement(bearing, distance);
+        }
+    }
+
+    private void handleDefaultMovement(double bearing, double distance) {
+        if (distance > 500) {
             turnRight(bearing + 45);
             forward(90 * moveDirection);
         } else if (distance > 180) {
@@ -184,7 +244,7 @@ public class VanJeckylson extends Bot {
     }
 
     private boolean isNearWall() {
-        return getX() < 80 || getY() < 80 || getX() > getArenaWidth() - 80 || getY() > getArenaHeight() - 80;
+        return getX() < WALL_MARGIN || getY() < WALL_MARGIN || getX() > getArenaWidth() - WALL_MARGIN || getY() > getArenaHeight() - WALL_MARGIN;
     }
 
     private void avoidWall() {
@@ -259,7 +319,7 @@ public class VanJeckylson extends Bot {
         hitCount = 0;
         wallHitCount = 0;
         scansSinceHitDecay = 0;
-        scansSinceLastSeen = 0;
+        turnsSinceLastSeen = 0;
         defensiveMode = false;
         lastEnemySeen = false;
     }
