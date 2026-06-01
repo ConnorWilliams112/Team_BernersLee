@@ -99,3 +99,30 @@ public class BudBot extends Bot {
 
     @Override
 }
+
+
+public void antiGravity() {
+    double xForce = 0, yForce = 0;
+    final double wallForce = 5000;
+
+    // Wall repulsion
+    xForce += wallForce / Math.pow(getBattleFieldWidth() - getX(), 2);
+    xForce -= wallForce / Math.pow(getX(), 2);
+    yForce += wallForce / Math.pow(getBattleFieldHeight() - getY(), 2);
+    yForce -= wallForce / Math.pow(getY(), 2);
+
+    // Convert to angle
+    double angle = Math.atan2(yForce, xForce);
+    double turn = Utils.normalRelativeAngle(angle - getHeadingRadians());
+
+    double distance = Math.min(100, Math.hypot(xForce, yForce) * 400);
+
+    // Reverse logic
+    if (Math.abs(turn) > Math.PI / 2) {
+        turn = Utils.normalRelativeAngle(turn + Math.PI);
+        distance = -distance;
+    }
+
+    setTurnRightRadians(turn);
+    setAhead(distance);
+}
