@@ -1,15 +1,8 @@
 {
   "name": "BudBot",
   "version": "1.0",
-  "authors": [
-    "Michael Schnabel",
-    "Connor Williams"
-  ],
-  "description": "A fast, lethal bot named after the legendary B U D Z I T O W S K I.",
-  "homepage": "",
-  "countryCodes": [
-    "us"
-  ],
+  "authors": ["Michael Schnabel", "Connor Williams"],
+  "description": "One sentence about your strategy.",
   "platform": "JVM",
   "programmingLang": "Java 25"
 }
