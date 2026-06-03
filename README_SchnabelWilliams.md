@@ -61,20 +61,32 @@ been easier to implement?]
 
 ## Critical Thinking
 
-> **Object Oriented Programming and modularization**
->
-> When implementing your Robocode robot using an object-oriented paradigm, consider how the structure of 
-> your code shaped the way you and your partner divided and coordinated your work. In your response, 
-> address the following:
->
-> 1. How did encapsulating behaviors into classes and methods (e.g., movement logic, targeting, or event 
->    handling) affect how you and your partner split responsibilities? Would the same division of 
->    work have been natural in a purely imperative approach?
-> 2. Robocode provides an upstream class hierarchy (e.g., Robot or AdvancedRobot) that your robot 
->    extends. How did inheriting from these base classes both enable and constrain your design 
->    decisions? Were there moments where the upstream API guided or changed your intended approach?
-> 3. Reflect on the concept of a contract in OOP — the expectation that a method or class behaves in a 
->    predictable way. How did defining (or relying on) these contracts between your own classes affect how 
->    you and your partner could work independently without constantly syncing?
+**Object Oriented Programming and modularization**
 
-[Your answer here]
+1. The classes and methods made it simple to divide the robot into behaviors. Both of us could work on 
+any of the behaviors at a time, for example, with Connor developing movement logic while Mike worked on 
+targeting. Keeping the rest of the behaviors the same made iterating simpler in that we both would keep 
+the same "starting point" while making our own changes to see what worked. Making a change to 
+`computeVJMovement()` would not affect `pickFirePower()`.
+ 
+It would have been more difficult to achieve this in a purely imperative approach because the procedural 
+steps for the robot are not clear when designing its behavior. In this case, without explicit methods and 
+attributes, making a change to movement patterns would require careful design to avoid unintended 
+consequences to targeting.
+ 
+2. Inheriting from the `Bot` class gave us a clear starting point for our code. It allowed us to abstract 
+away the low-level Robocode-isms and focus on the hooks to begin our implementation. `run()`, `onScannedBot()`, 
+and `onHitWall()`, for example, make it clear to the developer how our bot interacts in the battle. This gave 
+a simple, event-driven skeleton for developing our bot.
+ 
+A couple challenges did come from using the API. When designing the antigravity movement pattern, we could 
+have imported from `robocode.util.Utils` and the implementation would have been far easier. However, the API 
+we were working with did not allow this import. Another complexity of using the API was that the radar and 
+gun movement are tied together. We had to design scanning and aiming around turning the gun. It would be 
+beneficial to be able to scan without moving the gun and only moving the gun on request.
+ 
+3. The "contract" concept of OOP made collaborative work a lot simpler than dealing with pure imperative 
+programming. Each method had a purpose that should not interfere with other methods. As mentioned in our 
+algorithm development, keeping method responsibilities separate ensured we could each develop on our own 
+and test changes independently. We could also share different method implementations with each other easily, 
+which became the backbone of how we worked collaboratively on VanJeckylson.
