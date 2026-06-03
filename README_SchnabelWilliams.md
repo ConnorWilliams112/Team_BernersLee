@@ -5,16 +5,37 @@ Connor Williams     connor.williams@nps.edu
 
 ## Overview
 
-[One or two sentences describing what this lab asked you to do and how
-you ended up solving it.]
+This lab required students to develop an autonomous Robocode tank to battle 
+1v1 against sample bots and in a free-for-all melee fight against all the other
+student bots. We implemented VanJeckylson, which incorporates highly dynamic 
+movement, improved targeting, and variable tactics for 1v1 and melee battles.
 
 ## Methodology and Approach
 
 ### Robot Algorithmic Design
 
-[Describe how you approached designing your bot. Specifically, what algorithm
-did you develop for your bot and how do you figure it will succeed in at least
-defeating the other sample bots? How did you test your robot during development?]
+We approached designing the bot by initially working on two separate bots independantly,
+then merging the best concepts from both into a final product. We tested our bots against 
+the sample bots repeatedly until we got to a point where both were succesful the vast
+majority of the time. We primarily used the online robocode documentation and wiki as a
+starting point for our algorithms and code, then adapted them as we saw fit. For testing,
+we ran our bots 1v1 against all the sample bots, as well as in a melee against all the 
+sample bots at once. Additionally, we loaded both of our bots simultaneously under different
+names and competed them 1v1 and in a melee to see whose tactics/algorithms were working best.
+The primary surviving algorithm concepts in our bot are dynamic targeting, a hybrid movement 
+system, and variable tactics for the different types of engagements. For dynamic targeting, 
+we estimate future enemy position using linear prediction and vary the firepower based on 
+how close the enemy is. This conserves energy when hit confidence is low, but also
+facilitates more aggressive engagement when confidence is high. Our movement system is
+the most complex part of the code and is primarily how we implement different tactics
+for 1v1 vs melee. We created a hybrid movement system using "antigravity" (which uses  
+repulsive forces that "push" the bot away from walls and enemies) and a more fixed, 
+aggressive movement system that strafes enemy and incorporates some random direction
+switches. When there are more than 2 enemy bots in the arena, VanJeckylson biases more
+towards conservative antigravity-style movement in order to preserve itself longer. When 
+the field drops down to 2 or less enemy, VanJeckylson biases more towards the aggressive,
+deterministic movement. Neither movement system is entirely disregarded at any point, 
+however, allowing our bot to keep the best of both types but adjust to its circumstances.
 
 ### Object Oriented Programming
 
