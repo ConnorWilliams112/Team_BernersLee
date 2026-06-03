@@ -38,26 +38,40 @@ at any point, however, allowing our bot to keep the best of both types but adjus
 
 ### Object Oriented Programming
 
-[Describe how you worked on understaning the RoboCode library. Did you use the 
-JavaDocs? Did you just go by what was on the Readme. Specifically mention if
-the object oriented nature of Java was beneficial or harmful for your ease 
-of implementation.]
-
 To understand the RoboCode library, we utilized the README and sample bots some, but our primary source
 was the Robocode.dev site and the Robocode wiki. The README and sample bots got us started with initial
 iterations of the bots and allowed us to get our feet under us with respect to the built in library
-methods and event handlers. 
+methods and event handlers. The dev site and wiki are what facilitated our learning about the tactics/
+strategy for writing and structuring the bot, as well as some best practices when implementing various
+pieces of the bot (such as dynamic shot power level, movement techniques, and melee vs 1v1 tactics).
+Java being highly object oriented made this a breeze, specifically in that it gave us (via inheritance)
+an incredibly rich and well built out set of functions that were cleanly documented and easily 
+implemented. It let us essentially isolate all the behaviors we wanted to implement as methods or as
+modifications to existing event handlers then simply create a Run() function to actually call them during a
+turn. In short, the object oriented nature gave us the ability to abstract the desired behaviors into
+methods/event handlers then easily put them together in a Run() method. In addition, the abstraction
+allowed us to easily iterate and debug specific behaviors, whereas a more monolithic type of approach
+would have been less easily readable and comprehendable for us as developers. 
 
 ## Generative AI and LLM Consultation
 
-[Detail what AI tools you used]
+We used Ai for some debugging and code generation (e.g. update this method to incorporate feature X), but 
+that was the extent. Starting with a template of MyFirstBot.java, we wrote the methods and event handlers
+ourselves then turned to Ai for debugging help if needed. Additionally, on the conceptual side, we used Ai
+to help clarify things about Robocode API usage and to sanity check our responses/thinking for the README.
 
 ## Challenges
 
-[Describe the challenges of working within the a strict object oriented paradigm.
-Do you feel like it overly constrained your algorithmic design or did it help
-your conceptualization of the task. Were there any awkward parts which would have
-been easier to implement?]
+The object oriented paradigm felt in no way like a hindrance to implementing our chosen algorithm. It 
+almost exclusively made it easier because it allowed us to encapsulate and isolate our desired behaviors
+then focus on improving those one at a time versus wrestling with some large, confusing IF/ELSE tree.
+Additionally, inheritance helped a ton in that it gave us a ready made API that handled the vast majority
+of complex tasks that the game involved. This would have been a considerably harder project if things like
+'onScannedBot()' and 'getEnemyCount()' didn't exist and we had to implement them ourselves. 
+Some of the math parts were a little ugly and hard to read (e.g. "Math.sin(Math.toRadians(e.getDirection()))"),
+but for the most part this project lent itself very nicely to object orientation. Especially coming
+from a background in primarily Python, none of this lab felt particularly awkward or forced. If anything it 
+was exactly how we were used to accomplishing tasks like this.
 
 ## Critical Thinking
 
