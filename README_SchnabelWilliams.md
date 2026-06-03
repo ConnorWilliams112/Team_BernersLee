@@ -22,22 +22,19 @@ starting point for our algorithms and code, then adapted them as we saw fit. For
 we ran our bots 1v1 against all the sample bots, as well as in a melee against all the 
 sample bots at once. Additionally, we loaded both of our bots simultaneously under different
 names and competed them 1v1 and in a melee to see whose tactics/algorithms were working best.
-
-
 The primary surviving algorithm concepts in our bot are dynamic targeting, a hybrid movement 
-system, enemy tracking, and variable tactics for the different types of engagements. For dynamic targeting, 
-we estimate future enemy position using linear prediction based on bullet travel time, and enemy direction / speed. We vary the firepower based on these factors and enemy distance so the bot fires more aggressively at closer targets and weaker shots for lower confidence targets.
-
-The movement system is the most complex part of the code and is primarily how we implement different tactics
-for 1v1 vs melee. We created a hybrid movement system using "antigravity" (which uses  repulsive forces that "push" the bot away from walls and enemies) and a more fixed, aggressive movement system that strafes the enemy and incorporates some random direction switches. 
-
-When there are more than 2 enemy bots in the arena, VanJeckylson biases more
-towards conservative antigravity-style movement in order to preserve itself longer. When 
-the field drops down to 2 or less enemy, VanJeckylson biases more towards the aggressive,
-deterministic movement. Neither movement system is entirely disregarded at any point, 
-however, allowing our bot to keep the best of both types but adjust to its circumstances.
-
-The bot also tracks recently scanned enemies in an array. The antigravity system uses the array to calculate repulsive forces, which prevents VanJeckylson from driving directly into crowded areas.
+system, enemy tracking, and variable tactics for the different types of engagements. For dynamic 
+targeting, we estimate future enemy position using linear prediction based on bullet travel time, 
+and enemy direction / speed. We vary the firepower based on these factors and enemy distance so 
+the bot fires more aggressively at closer targets and weaker shots for lower confidence targets.
+The movement system is the most complex part of the code and is primarily how we implement different 
+tactics for 1v1 vs melee. We created a hybrid movement system using "antigravity" (which uses repulsive 
+forces that "push" the bot away from walls and enemies) and a more fixed, aggressive movement system 
+that strafes the enemy and incorporates some random direction switches. When there are more than 2 
+enemy bots in the arena, VanJeckylson biases more towards conservative antigravity-style movement in 
+order to preserve itself longer. When the field drops down to 2 or less enemy, VanJeckylson biases 
+more towards the aggressive, deterministic movement. Neither movement system is entirely disregarded 
+at any point, however, allowing our bot to keep the best of both types but adjust to its circumstances.
 
 ### Object Oriented Programming
 
@@ -45,6 +42,8 @@ The bot also tracks recently scanned enemies in an array. The antigravity system
 JavaDocs? Did you just go by what was on the Readme. Specifically mention if
 the object oriented nature of Java was beneficial or harmful for your ease 
 of implementation.]
+
+
 
 ## Generative AI and LLM Consultation
 
