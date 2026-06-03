@@ -43,7 +43,10 @@ JavaDocs? Did you just go by what was on the Readme. Specifically mention if
 the object oriented nature of Java was beneficial or harmful for your ease 
 of implementation.]
 
-
+To understand the RoboCode library, we utilized the README and sample bots some, but our primary source
+was the Robocode.dev site and the Robocode wiki. The README and sample bots got us started with initial
+iterations of the bots and allowed us to get our feet under us with respect to the built in library
+methods and event handlers. 
 
 ## Generative AI and LLM Consultation
 
